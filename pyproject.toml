@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edpay"
+version = "0.1.0"
+description = "SDK oficial da plataforma EDPay para Python"
+readme = "README.md"
+authors = [{ name = "Edutecka Servicos Tecnologicos Lda", email = "dev@edutecka.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.28.0",
+]
