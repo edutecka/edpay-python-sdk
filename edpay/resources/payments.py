@@ -9,27 +9,43 @@ class PaymentsResource:
         self,
         amount_minor: int,
         currency: str,
-        method: str,
+        method: Optional[str] = None,
+        methods: Optional[list] = None,
         phone: Optional[str] = None,
         reference: Optional[str] = None,
         description: Optional[str] = None,
+        return_url: Optional[str] = None,
+        cancel_url: Optional[str] = None,
+        channel: Optional[str] = None,
+        expires_in_minutes: Optional[int] = None,
         emola_custom_message: Optional[str] = None,
         customer: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         idempotency_key: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Cria uma transação de pagamento direta na EDPay."""
+        """Cria uma transação de pagamento direta ou sessão de checkout unificada na EDPay."""
         payload: Dict[str, Any] = {
             "amount_minor": amount_minor,
             "currency": currency,
-            "method": method,
         }
+        if method:
+            payload["method"] = method
+        if methods:
+            payload["methods"] = methods
         if phone:
             payload["phone"] = phone
         if reference:
             payload["reference"] = reference
         if description:
             payload["description"] = description
+        if return_url:
+            payload["return_url"] = return_url
+        if cancel_url:
+            payload["cancel_url"] = cancel_url
+        if channel:
+            payload["channel"] = channel
+        if expires_in_minutes:
+            payload["expires_in_minutes"] = expires_in_minutes
         if emola_custom_message:
             payload["emola_custom_message"] = emola_custom_message
         if customer:
