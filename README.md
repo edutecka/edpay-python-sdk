@@ -1,105 +1,151 @@
 # EDPay Python SDK
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+Official Python client for server-to-server integrations with EDPay. It can be used from a Python application or service to create and retrieve payments and hosted checkout sessions, among other API resources.
 
-SDK oficial da EDPay para integração server-to-server com Python (FastAPI, Django, Flask ou scripts autónomos).
+## Requirements
 
-A plataforma EDPay é uma infraestrutura multi-gateway agnóstica em Moçambique, processando pagamentos via carteiras móveis (M-Pesa, e-Mola), cartões Visa/Mastercard com 3DS, Apple Pay, Google Pay e referências bancárias.
+- Python 3.9 or later
+- pip
 
----
+## Install
 
-## Instalação
+Install directly from the official source repository (this does not rely on a package-index release):
 
 ```bash
-pip install edpay
+python -m pip install "git+https://github.com/edutecka/edpay-python-sdk.git"
 ```
 
-Ou com `poetry` / `pipenv`:
+For local development or to install from a local checkout:
+
 ```bash
-poetry add edpay
+git clone https://github.com/edutecka/edpay-python-sdk.git
+cd edpay-python-sdk
+python -m pip install -e ".[dev]"
 ```
 
----
+## Create a payment
 
-## Inicialização
+Create API keys in the EDPay merchant dashboard and keep the private key on your server. The SDK authenticates partner API requests using the `X-EDPay-Public-Key` and `X-EDPay-Private-Key` headers.
+
+```bash
+export EDPAY_PUBLIC_KEY=pk_test_...
+export EDPAY_PRIVATE_KEY=sk_test_...
+export EDPAY_METHOD=method_id_from_payment_methods
+```
+
+Choose `EDPAY_METHOD` from the IDs returned by `GET /v1/public/payment-methods`. The method is gateway-specific and the available payment flow depends on that method.
 
 ```python
+import os
 from edpay import EDPayClient
 
 client = EDPayClient(
-    public_key="pk_live_...",
-    private_key="sk_live_...",
-    environment="production",  # ou "sandbox"
+    public_key=os.environ["EDPAY_PUBLIC_KEY"],
+    private_key=os.environ["EDPAY_PRIVATE_KEY"],
+    environment="sandbox",
 )
-```
 
----
-
-## Criar um Pagamento
-
-```python
 payment = client.payments.create(
-    amount_minor=50000,           # 500.00 MZN
+    amount_minor=50000,  # 500.00 MZN
     currency="MZN",
-    method="emola",               # ou "mpesa", "card", "apple_pay", etc.
-    phone="+25884xxxxxxx",        # obrigatório para mobile wallets
-    reference="FAT-2026-001",
-    description="Assinatura Mensal",
-    emola_custom_message="Pagamento de Servicos via EDPay",
-    customer={
-        "name": "Carlos Tembe",
-        "email": "carlos@exemplo.co.mz",
-    },
+    method=os.environ["EDPAY_METHOD"],
+    phone="+25884xxxxxxx",  # Optional; use only when required by the selected method.
+    reference="ORDER-10492",
+    description="Example order",
+    idempotency_key="ORDER-10492",
 )
-
-print(payment["id"])
-print(payment["status"])  # "processing", "succeeded", "failed"
+print(payment)
 ```
 
----
+`amount_minor` is the amount in minor currency units. The SDK selects the sandbox API when `environment="sandbox"` (or `"test"`); its default environment is production. Use an idempotency key when retrying a create request. API errors are raised as `EDPayException` with the HTTP status and response data.
 
-## Verificar Assinatura de Webhook
-
-A EDPay assina todos os eventos de webhook com HMAC SHA-256 no header `X-EDPay-Signature`.
+## Create a hosted checkout session
 
 ```python
-from edpay.webhooks import verify_webhook_signature
+session = client.checkout.create_session(
+    amount_minor=50000,
+    currency="MZN",
+    success_url="https://merchant.example/checkout/success",
+    cancel_url="https://merchant.example/checkout/cancel",
+    reference="ORDER-10492",
+    idempotency_key="ORDER-10492-checkout",
+)
+print(session)
+```
 
-# No FastAPI
-from fastapi import FastAPI, Request, HTTPException
+Redirect the customer to the hosted checkout URL in the API response. Confirm the final payment state from a verified webhook or by retrieving the payment; do not rely only on the browser return URL.
+
+## Verify an EDPay webhook in FastAPI
+
+Install FastAPI and an ASGI server separately for this example:
+
+```bash
+python -m pip install fastapi uvicorn
+export EDPAY_WEBHOOK_SECRET=your_webhook_secret
+```
+
+```python
+import os
+from fastapi import FastAPI, HTTPException, Request
+from edpay.webhooks import verify_webhook_signature
 
 app = FastAPI()
 
-@app.post("/webhook/edpay")
+@app.post("/webhooks/edpay")
 async def edpay_webhook(request: Request):
-    payload = await request.body()
+    raw_body = await request.body()
     signature = request.headers.get("x-edpay-signature", "")
-    secret = "whsec_..."
-
-    if not verify_webhook_signature(payload, signature, secret):
+    if not verify_webhook_signature(
+        raw_body, signature, os.environ["EDPAY_WEBHOOK_SECRET"]
+    ):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     event = await request.json()
-    if event["event"] == "payment.succeeded":
-        payment_id = event["data"]["id"]
-        # Atualizar encomenda na base de dados
-        print(f"Pagamento aprovado: {payment_id}")
-
+    if event.get("type") == "payment.succeeded":
+        # Update the matching order idempotently using event data.
+        pass
     return {"received": True}
 ```
 
----
+Save the example as `app.py` and run it with `uvicorn app:app`. Verify the signature against the unmodified raw request body before processing an event.
 
-## Prazos e Condições Comerciais
+## Available resources
 
-- **Tarifa Unificada**: 6,00% em Meticais (MZN) sem custos ocultos de adesão.
-- **Liquidação Bancária**: Transferência direta para a conta do comerciante entre 2 a 7 dias úteis.
+The client exposes `client.payments`, `client.checkout`, `client.payment_links`, `client.customers`, `client.invoices`, and `client.subscriptions`. See each resource in `edpay/resources/` for the implemented method signatures. For example, payment links support `create`, `retrieve`, and `revoke`.
 
----
+## Tests
 
-## Suporte & Comunidade
+```bash
+python -m pip install -e ".[dev]"
+pytest
+```
 
-- Documentação da API: [https://docs.edpay.co.mz](https://docs.edpay.co.mz)
-- Dashboard e Sandbox: [https://edpay.co.mz/dashboard](https://edpay.co.mz/dashboard)
-- Contacto de Engenharia: `dev@edutecka.com`
+## Documentation
+
+- [EDPay SDK integration guide](https://docs-pay.edutecka.com/sdks/)
+- [Payments API reference](https://docs-pay.edutecka.com/api/payments/)
+- [Authentication and API keys](https://docs-pay.edutecka.com/guides/authentication/)
+- [Webhooks](https://docs-pay.edutecka.com/api/webhooks/)
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Official SDK repositories
+
+- [JavaScript / TypeScript](https://github.com/edutecka/edpay-javascript-sdk)
+- [PHP](https://github.com/edutecka/edpay-php-sdk)
+- [Java](https://github.com/edutecka/edpay-java-sdk)
+- [.NET](https://github.com/edutecka/edpay-dot-net-sdk)
+- [Python](https://github.com/edutecka/edpay-python-sdk)
+
+## Official e-commerce plugin repositories
+
+These repositories contain integration previews; check each project README for its implementation status and limitations before use.
+
+- [WooCommerce (WordPress)](https://github.com/edutecka/edpay-woocommerce-plugin)
+- [Shopify](https://github.com/edutecka/edpay-shopify-app)
+- [Magento / Adobe Commerce](https://github.com/edutecka/edpay-magento2-module)
+- [PrestaShop](https://github.com/edutecka/edpay-prestashop-module)
+- [OpenCart](https://github.com/edutecka/edpay-opencart-extension)
+- [WHMCS](https://github.com/edutecka/edpay-whmcs-gateway)
