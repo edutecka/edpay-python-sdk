@@ -1,6 +1,6 @@
 # EDPay Python SDK
 
-Official Python client for server-to-server integrations with EDPay. It can be used from a Python application or service to create and retrieve payments and hosted checkout sessions, among other API resources.
+Python client for sending server-to-server requests to the EDPay API.
 
 ## Requirements
 
@@ -9,18 +9,10 @@ Official Python client for server-to-server integrations with EDPay. It can be u
 
 ## Install
 
-Install directly from the official source repository (this does not rely on a package-index release):
+Install the SDK:
 
 ```bash
 python -m pip install "git+https://github.com/edutecka/edpay-python-sdk.git"
-```
-
-For local development or to install from a local checkout:
-
-```bash
-git clone https://github.com/edutecka/edpay-python-sdk.git
-cd edpay-python-sdk
-python -m pip install -e ".[dev]"
 ```
 
 ## Create a payment
@@ -33,7 +25,7 @@ export EDPAY_PRIVATE_KEY=sk_test_...
 export EDPAY_METHOD=method_id_from_payment_methods
 ```
 
-Choose `EDPAY_METHOD` from the IDs returned by `GET /v1/public/payment-methods`. The method is gateway-specific and the available payment flow depends on that method.
+Choose `EDPAY_METHOD` from the IDs returned by `GET /v1/public/payment-methods`. The method identifier is dynamic; the required fields depend on the selected method.
 
 ```python
 import os
@@ -43,6 +35,7 @@ client = EDPayClient(
     public_key=os.environ["EDPAY_PUBLIC_KEY"],
     private_key=os.environ["EDPAY_PRIVATE_KEY"],
     environment="sandbox",
+    base_url="https://api-pay.edutecka.com",
 )
 
 payment = client.payments.create(
@@ -57,7 +50,7 @@ payment = client.payments.create(
 print(payment)
 ```
 
-`amount_minor` is the amount in minor currency units. The SDK selects the sandbox API when `environment="sandbox"` (or `"test"`); its default environment is production. Use an idempotency key when retrying a create request. API errors are raised as `EDPayException` with the HTTP status and response data.
+`amount_minor` is the amount in minor currency units. Use test keys for sandbox requests and an idempotency key when retrying a create request. API errors are raised as `EDPayException` with the HTTP status and response data.
 
 ## Create a hosted checkout session
 
@@ -109,16 +102,17 @@ async def edpay_webhook(request: Request):
 
 Save the example as `app.py` and run it with `uvicorn app:app`. Verify the signature against the unmodified raw request body before processing an event.
 
-## Available resources
+## Available operations
 
-The client exposes `client.payments`, `client.checkout`, `client.payment_links`, `client.customers`, `client.invoices`, and `client.subscriptions`. See each resource in `edpay/resources/` for the implemented method signatures. For example, payment links support `create`, `retrieve`, and `revoke`.
+- Payments: `create`, `retrieve`, `cancel`
+- Checkout sessions: `create_session`, `retrieve_session`, `expire_session`
+- Payment links: `create`, `retrieve`, `revoke`
+- Customers: `create`, `retrieve`, `update`
+- Invoices: `create`, `get`, `list`, `finalize`, `void`
+- Subscriptions: `create`, `get`, `list`, `pause`, `resume`
+- Webhooks: `verify_webhook_signature`
 
-## Tests
-
-```bash
-python -m pip install -e ".[dev]"
-pytest
-```
+The client returns decoded JSON responses as Python dictionaries. Use the resource methods above to retrieve IDs and payment status from the API response.
 
 ## Documentation
 
