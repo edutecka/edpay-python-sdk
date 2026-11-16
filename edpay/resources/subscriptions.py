@@ -1,8 +1,9 @@
 from typing import Any, Dict, Optional
+from urllib.parse import quote
 
 
 class Subscriptions:
-    """Recurso para criação e gestão de planos de faturação recorrente / subscrições."""
+    """Resource for creating and managing recurring billing plans / subscriptions."""
 
     def __init__(self, client: Any) -> None:
         self._client = client
@@ -10,23 +11,19 @@ class Subscriptions:
     def create(
         self,
         params: Dict[str, Any],
-        idempotency_key: Optional[str] = None,
+        idempotency_key: str,
     ) -> Dict[str, Any]:
-        """Cria uma série de subscrição recorrente (invoice series)."""
+        """Create a recurring subscription series (invoice series)."""
         return self._client.request("POST", "/v1/invoice-series", data=params, idempotency_key=idempotency_key)
 
-    def get(self, series_id: str) -> Dict[str, Any]:
-        """Consulta os dados de uma subscrição por ID."""
-        return self._client.request("GET", f"/v1/invoice-series/{series_id}")
-
-    def list(self, **params: Any) -> Dict[str, Any]:
-        """Lista subscrições com filtros opcionais."""
-        return self._client.request("GET", "/v1/invoice-series", params=params)
+    def list(self, limit: Optional[int] = None) -> Dict[str, Any]:
+        """List invoice series, optionally limiting the number returned."""
+        return self._client.request("GET", "/v1/invoice-series", params={"limit": limit} if limit is not None else None)
 
     def pause(self, series_id: str) -> Dict[str, Any]:
-        """Pausa uma subscrição recorrente."""
-        return self._client.request("POST", f"/v1/invoice-series/{series_id}/pause")
+        """Pause a recurring subscription."""
+        return self._client.request("POST", f"/v1/invoice-series/{quote(series_id, safe='')}/pause")
 
     def resume(self, series_id: str) -> Dict[str, Any]:
-        """Retoma uma subscrição pausada."""
-        return self._client.request("POST", f"/v1/invoice-series/{series_id}/resume")
+        """Resume a paused subscription."""
+        return self._client.request("POST", f"/v1/invoice-series/{quote(series_id, safe='')}/resume")

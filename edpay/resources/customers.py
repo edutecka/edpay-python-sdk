@@ -1,4 +1,5 @@
 from typing import Any, Dict, Optional
+from urllib.parse import quote
 
 
 class CustomersResource:
@@ -8,29 +9,24 @@ class CustomersResource:
     def create(
         self,
         name: str,
-        email: str,
-        phone: Optional[str] = None,
-        tax_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        email: Optional[str] = None,
+        *,
+        idempotency_key: str,
     ) -> Dict[str, Any]:
-        """Cria um cliente no sistema EDPay."""
+        """Create a customer in the EDPay system."""
         payload: Dict[str, Any] = {
             "name": name,
             "email": email,
         }
-        if phone:
-            payload["phone"] = phone
-        if tax_id:
-            payload["tax_id"] = tax_id
-        if metadata:
-            payload["metadata"] = metadata
+        return self._client.request("POST", "/v1/customers", json_data=payload, idempotency_key=idempotency_key)
 
-        return self._client.request("POST", "/v1/customers", json_data=payload)
+    def list(self) -> Dict[str, Any]:
+        return self._client.request("GET", "/v1/customers")
 
     def retrieve(self, customer_id: str) -> Dict[str, Any]:
-        """Consulta um cliente pelo ID."""
-        return self._client.request("GET", f"/v1/customers/{customer_id}")
+        """Retrieve a customer by ID."""
+        return self._client.request("GET", f"/v1/customers/{quote(customer_id, safe='')}")
 
-    def update(self, customer_id: str, **kwargs) -> Dict[str, Any]:
-        """Atualiza os dados de um cliente."""
-        return self._client.request("PUT", f"/v1/customers/{customer_id}", json_data=kwargs)
+    def update(self, customer_id: str, *, idempotency_key: str, **fields: Any) -> Dict[str, Any]:
+        """Patch customer name/email; an idempotency key is mandatory."""
+        return self._client.request("PATCH", f"/v1/customers/{quote(customer_id, safe='')}", json_data=fields, idempotency_key=idempotency_key)

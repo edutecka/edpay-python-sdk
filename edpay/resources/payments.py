@@ -1,4 +1,5 @@
 from typing import Any, Dict, Optional
+from urllib.parse import quote
 
 
 class PaymentsResource:
@@ -10,59 +11,46 @@ class PaymentsResource:
         amount_minor: int,
         currency: str,
         method: Optional[str] = None,
-        methods: Optional[list] = None,
         phone: Optional[str] = None,
+        customer_id: Optional[str] = None,
         reference: Optional[str] = None,
         description: Optional[str] = None,
-        return_url: Optional[str] = None,
-        cancel_url: Optional[str] = None,
-        channel: Optional[str] = None,
-        expires_in_minutes: Optional[int] = None,
-        emola_custom_message: Optional[str] = None,
-        customer: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        idempotency_key: Optional[str] = None,
+        channel: Optional[Dict[str, Any]] = None,
+        *,
+        idempotency_key: str,
     ) -> Dict[str, Any]:
-        """Cria uma transação de pagamento direta ou sessão de checkout unificada na EDPay."""
+        """Create a direct payment intent. Phone and channel fields depend on method."""
         payload: Dict[str, Any] = {
             "amount_minor": amount_minor,
             "currency": currency,
         }
-        if method:
+        if method is not None:
             payload["method"] = method
-        if methods:
-            payload["methods"] = methods
-        if phone:
+        if phone is not None:
             payload["phone"] = phone
+        if customer_id:
+            payload["customer_id"] = customer_id
         if reference:
             payload["reference"] = reference
         if description:
             payload["description"] = description
-        if return_url:
-            payload["return_url"] = return_url
-        if cancel_url:
-            payload["cancel_url"] = cancel_url
-        if channel:
+        if channel is not None:
             payload["channel"] = channel
-        if expires_in_minutes:
-            payload["expires_in_minutes"] = expires_in_minutes
-        if emola_custom_message:
-            payload["emola_custom_message"] = emola_custom_message
-        if customer:
-            payload["customer"] = customer
-        if metadata:
-            payload["metadata"] = metadata
+        return self._client.request("POST", "/v1/payments", json_data=payload, idempotency_key=idempotency_key)
 
-        headers = {}
-        if idempotency_key:
-            headers["Idempotency-Key"] = idempotency_key
+    def create_checkout(self, payload: Dict[str, Any], idempotency_key: str) -> Dict[str, Any]:
+        """Legacy alias for creating a payment intent through /v1/payment-checkout."""
+        return self._client.request("POST", "/v1/payment-checkout", json_data=payload, idempotency_key=idempotency_key)
 
-        return self._client.request("POST", "/v1/payments", json_data=payload, headers=headers)
+    def list(self, limit: int = 50) -> Dict[str, Any]:
+        return self._client.request("GET", "/v1/payments", params={"limit": limit})
 
     def retrieve(self, payment_id: str) -> Dict[str, Any]:
-        """Consulta o estado de um pagamento pelo seu identificador único."""
-        return self._client.request("GET", f"/v1/payments/{payment_id}")
+        """Retrieve a payment's status by its unique identifier."""
+        return self._client.request("GET", f"/v1/payments/{quote(payment_id, safe='')}")
 
-    def cancel(self, payment_id: str) -> Dict[str, Any]:
-        """Cancela um pagamento pendente."""
-        return self._client.request("POST", f"/v1/payments/{payment_id}/cancel")
+    def events(self, payment_id: str) -> Dict[str, Any]:
+        return self._client.request("GET", f"/v1/payments/{quote(payment_id, safe='')}/events")
+
+    def attempts(self, payment_id: str) -> Dict[str, Any]:
+        return self._client.request("GET", f"/v1/payments/{quote(payment_id, safe='')}/attempts")

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
+from urllib.parse import quote
 
 
 class CheckoutResource:
@@ -7,42 +8,38 @@ class CheckoutResource:
 
     def create_session(
         self,
-        amount_minor: int,
-        currency: str,
-        success_url: str,
-        cancel_url: str,
-        reference: Optional[str] = None,
-        payment_methods: Optional[List[str]] = None,
-        customer_email: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        idempotency_key: Optional[str] = None,
+        payment_link_id: str,
+        idempotency_key: str,
+        embed_origin: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Cria uma sessão de checkout alojada pela EDPay."""
-        payload: Dict[str, Any] = {
-            "amount_minor": amount_minor,
-            "currency": currency,
-            "success_url": success_url,
-            "cancel_url": cancel_url,
-        }
-        if reference:
-            payload["reference"] = reference
-        if payment_methods:
-            payload["payment_methods"] = payment_methods
-        if customer_email:
-            payload["customer_email"] = customer_email
-        if metadata:
-            payload["metadata"] = metadata
-
-        headers = {}
-        if idempotency_key:
-            headers["Idempotency-Key"] = idempotency_key
-
-        return self._client.request("POST", "/v1/checkout/sessions", json_data=payload, headers=headers)
+        """Create a checkout session hosted by EDPay."""
+        payload: Dict[str, Any] = {"payment_link_id": payment_link_id}
+        if embed_origin:
+            payload["embed_origin"] = embed_origin
+        return self._client.request("POST", "/v1/checkout/sessions", json_data=payload, idempotency_key=idempotency_key)
 
     def retrieve_session(self, session_id: str) -> Dict[str, Any]:
-        """Consulta os detalhes e o estado de uma sessão de checkout."""
-        return self._client.request("GET", f"/v1/checkout/sessions/{session_id}")
+        """Retrieve the details and status of a checkout session."""
+        return self._client.request("GET", f"/v1/checkout/sessions/{quote(session_id, safe='')}", authenticated=False)
 
-    def expire_session(self, session_id: str) -> Dict[str, Any]:
-        """Expira imediatamente uma sessão de checkout pendente."""
-        return self._client.request("POST", f"/v1/checkout/sessions/{session_id}/expire")
+    def get_payment_link(self, link_id: str) -> Dict[str, Any]:
+        return self._client.request("GET", f"/v1/checkout/payment-links/{quote(link_id, safe='')}", authenticated=False)
+
+    def frame_policy(self, token: str) -> Dict[str, Any]:
+        return self._client.request("GET", f"/v1/checkout/sessions/{quote(token, safe='')}/frame-policy", authenticated=False)
+
+    def create_session_payment(self, token: str, method: str, phone: str, idempotency_key: str) -> Dict[str, Any]:
+        return self._client.request("POST", f"/v1/checkout/sessions/{quote(token, safe='')}/payments",
+                                    json_data={"method": method, "phone": phone}, idempotency_key=idempotency_key, authenticated=False)
+
+    def retrieve_session_payment(self, token: str, payment_id: str) -> Dict[str, Any]:
+        path = f"/v1/checkout/sessions/{quote(token, safe='')}/payments/{quote(payment_id, safe='')}"
+        return self._client.request("GET", path, authenticated=False)
+
+    def create_payment_link_payment(self, link_id: str, method: str, phone: str, idempotency_key: str) -> Dict[str, Any]:
+        return self._client.request("POST", f"/v1/checkout/payment-links/{quote(link_id, safe='')}/payments",
+                                    json_data={"method": method, "phone": phone}, idempotency_key=idempotency_key, authenticated=False)
+
+    def retrieve_payment_link_payment(self, link_id: str, payment_id: str) -> Dict[str, Any]:
+        path = f"/v1/checkout/payment-links/{quote(link_id, safe='')}/payments/{quote(payment_id, safe='')}"
+        return self._client.request("GET", path, authenticated=False)

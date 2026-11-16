@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "edpay"
-version = "1.0.0"
-description = "SDK Oficial EDPay para Python - Multi-gateway payment orchestration platform"
+version = "1.4.0"
+description = "Official EDPay SDK for Python - multi-gateway payment orchestration platform"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"

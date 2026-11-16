@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 class PaymentLinksResource:
@@ -7,43 +7,29 @@ class PaymentLinksResource:
 
     def create(
         self,
-        title: str,
         amount_minor: int,
-        currency: str = "MZN",
-        description: Optional[str] = None,
-        allowed_methods: Optional[List[str]] = None,
-        max_uses: Optional[int] = None,
+        currency: str,
+        *,
         expires_at: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        idempotency_key: Optional[str] = None,
+        idempotency_key: str,
     ) -> Dict[str, Any]:
-        """Cria um link de pagamento partilhável."""
+        """Create a shareable payment link."""
         payload: Dict[str, Any] = {
-            "title": title,
             "amount_minor": amount_minor,
             "currency": currency,
         }
-        if description:
-            payload["description"] = description
-        if allowed_methods:
-            payload["allowed_methods"] = allowed_methods
-        if max_uses is not None:
-            payload["max_uses"] = max_uses
         if expires_at:
             payload["expires_at"] = expires_at
-        if metadata:
-            payload["metadata"] = metadata
+        return self._client.request("POST", "/v1/payment-links", json_data=payload, idempotency_key=idempotency_key)
 
-        headers = {}
-        if idempotency_key:
-            headers["Idempotency-Key"] = idempotency_key
-
-        return self._client.request("POST", "/v1/payment-links", json_data=payload, headers=headers)
+    def list(self) -> Dict[str, Any]:
+        return self._client.request("GET", "/v1/payment-links")
 
     def retrieve(self, link_id: str) -> Dict[str, Any]:
-        """Consulta os dados de um link de pagamento."""
-        return self._client.request("GET", f"/v1/payment-links/{link_id}")
+        """Retrieve payment link data."""
+        from urllib.parse import quote
+        return self._client.request("GET", f"/v1/payment-links/{quote(link_id, safe='')}")
 
-    def revoke(self, link_id: str) -> Dict[str, Any]:
-        """Revoga ou desativa um link de pagamento."""
-        return self._client.request("POST", f"/v1/payment-links/{link_id}/revoke")
+    def deactivate(self, link_id: str, *, idempotency_key: str) -> Dict[str, Any]:
+        from urllib.parse import quote
+        return self._client.request("POST", f"/v1/payment-links/{quote(link_id, safe='')}/deactivate", idempotency_key=idempotency_key)
