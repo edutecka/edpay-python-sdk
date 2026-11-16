@@ -31,8 +31,18 @@ class EDPayClient:
         base_url: Optional[str] = None,
         timeout: float = 30.0,
     ):
-        if not public_key or not private_key:
-            raise ValueError("EDPayClient requires valid public_key and private_key values.")
+        public_key = public_key.strip() if isinstance(public_key, str) else ""
+        private_key = private_key.strip() if isinstance(private_key, str) else ""
+        public_mode = "test" if len(public_key) == 32 and public_key.startswith("pk_test_") else "live" if len(public_key) == 32 and public_key.startswith("pk_live_") else None
+        private_mode = "test" if len(private_key) == 72 and private_key.startswith("sk_test_") else "live" if len(private_key) == 72 and private_key.startswith("sk_live_") else None
+        if not public_mode or not all(char in "0123456789abcdefABCDEF" for char in public_key[8:]):
+            public_mode = None
+        if not private_mode or not all(char in "0123456789abcdefABCDEF" for char in private_key[8:]):
+            private_mode = None
+        if not public_mode or not private_mode:
+            raise ValueError("EDPayClient requires a valid public_key (pk_test_/pk_live_ plus 24 hex characters) and private_key (sk_test_/sk_live_ plus 64 hex characters).")
+        if public_mode != private_mode:
+            raise ValueError("EDPay public_key and private_key must use the same environment (test or live).")
 
         self.public_key = public_key
         self.private_key = private_key
@@ -81,7 +91,7 @@ class EDPayClient:
         req_headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "EDPay-Python-SDK/1.5.0",
+            "User-Agent": "EDPay-Python-SDK/1.5.1",
         }
         if authenticated:
             req_headers["X-EDPay-Public-Key"] = self.public_key
