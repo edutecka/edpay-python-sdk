@@ -36,6 +36,11 @@ class CheckoutResource:
         path = f"/v1/checkout/sessions/{quote(token, safe='')}/payments/{quote(payment_id, safe='')}"
         return self._client.request("GET", path, authenticated=False)
 
+    def create_session_payment_attempt(self, token: str, payment_id: str, method: str, phone: str, idempotency_key: str) -> Dict[str, Any]:
+        """Switch method for the same session payment after its prior attempt definitively failed."""
+        path = f"/v1/checkout/sessions/{quote(token, safe='')}/payments/{quote(payment_id, safe='')}/attempts"
+        return self._client.request("POST", path, json_data={"method": method, "phone": phone}, idempotency_key=idempotency_key, authenticated=False)
+
     def create_payment_link_payment(self, link_id: str, method: str, phone: str, idempotency_key: str) -> Dict[str, Any]:
         return self._client.request("POST", f"/v1/checkout/payment-links/{quote(link_id, safe='')}/payments",
                                     json_data={"method": method, "phone": phone}, idempotency_key=idempotency_key, authenticated=False)
@@ -43,3 +48,8 @@ class CheckoutResource:
     def retrieve_payment_link_payment(self, link_id: str, payment_id: str) -> Dict[str, Any]:
         path = f"/v1/checkout/payment-links/{quote(link_id, safe='')}/payments/{quote(payment_id, safe='')}"
         return self._client.request("GET", path, authenticated=False)
+
+    def create_payment_link_payment_attempt(self, link_id: str, payment_id: str, method: str, phone: str, idempotency_key: str) -> Dict[str, Any]:
+        """Switch method for the same link payment after its prior attempt definitively failed."""
+        path = f"/v1/checkout/payment-links/{quote(link_id, safe='')}/payments/{quote(payment_id, safe='')}/attempts"
+        return self._client.request("POST", path, json_data={"method": method, "phone": phone}, idempotency_key=idempotency_key, authenticated=False)

@@ -42,6 +42,28 @@ class PaymentsResource:
         """Legacy alias for creating a payment intent through /v1/payment-checkout."""
         return self._client.request("POST", "/v1/payment-checkout", json_data=payload, idempotency_key=idempotency_key)
 
+    def create_attempt(
+        self,
+        payment_id: str,
+        method: str,
+        phone: Optional[str] = None,
+        channel: Optional[Dict[str, Any]] = None,
+        *,
+        idempotency_key: str,
+    ) -> Dict[str, Any]:
+        """Start a child attempt on the same payment after the previous attempt definitively failed."""
+        payload: Dict[str, Any] = {"method": method}
+        if phone is not None:
+            payload["phone"] = phone
+        if channel is not None:
+            payload["channel"] = channel
+        return self._client.request(
+            "POST",
+            f"/v1/payments/{quote(payment_id, safe='')}/attempts",
+            json_data=payload,
+            idempotency_key=idempotency_key,
+        )
+
     def list(self, limit: int = 50) -> Dict[str, Any]:
         return self._client.request("GET", "/v1/payments", params={"limit": limit})
 

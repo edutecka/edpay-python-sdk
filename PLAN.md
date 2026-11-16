@@ -1,33 +1,33 @@
-# Roadmap & Plano de Arquitetura - EDPay Python SDK
+# Roadmap & Architecture Plan - EDPay Python SDK
 
-## Objectivos
-1. Desenvolver um cliente Python agnóstico de framework com suporte síncrono e assíncrono (via `httpx`).
-2. Type annotations completas (Pydantic / TypedDicts / dataclasses) para autocompletion perfeito em IDEs modernos (PyCharm, VS Code, Cursor).
-3. Integrações nativas prontas para Django (`edpay.contrib.django`) e FastAPI (`edpay.contrib.fastapi`).
+## Objectives
+1. Develop a framework-agnostic Python client with synchronous and asynchronous support (via `httpx`).
+2. Complete type annotations (Pydantic / TypedDicts / dataclasses) for excellent autocompletion in modern IDEs (PyCharm, VS Code, Cursor).
+3. Ready-to-use native integrations for Django (`edpay.contrib.django`) and FastAPI (`edpay.contrib.fastapi`).
 
 ---
 
-## Fases de Desenvolvimento
+## Development Phases
 
-### Fase 1: Core Client & Autenticação (Concluído)
-- [x] Cliente base com injeção dos headers `X-EDPay-Public-Key` e `X-EDPay-Private-Key`.
-- [x] Suporte a idempotência via `Idempotency-Key`.
-- [x] Alternância automática entre `sandbox` (`https://sandbox-api.edpay.co.mz`) e `production` (`https://api.edpay.co.mz`).
-- [x] Validação de assinatura HMAC SHA-256 para webhooks.
+### Phase 1: Core Client & Authentication (Completed)
+- [x] Base client with `X-EDPay-Public-Key` and `X-EDPay-Private-Key` header injection.
+- [x] Idempotency support via `Idempotency-Key`.
+- [x] Automatic switching between `sandbox` (`https://sandbox-api.edpay.co.mz`) and `production` (`https://api.edpay.co.mz`).
+- [x] HMAC SHA-256 signature verification for webhooks.
 
-### Fase 2: Módulos de Recursos (Concluído)
+### Phase 2: Resource Modules (Completed)
 - [x] `PaymentsResource`: `create`, `retrieve`, `cancel`.
 - [x] `CheckoutResource`: `create_session`, `expire_session`.
 - [x] `PaymentLinksResource`: `create`, `list`, `revoke`.
 - [x] `CustomersResource`: `create`, `retrieve`, `update`.
 - [x] `WebhooksResource`: `verify_signature`.
 
-### Fase 3: Framework Integrations & Middlewares (Em Planeamento)
-- [ ] Django App com webhook view e signal handlers (`edpay_payment_succeeded`).
-- [ ] FastAPI Dependency injection provider (`Depends(get_edpay_client)`).
-- [ ] Pydantic v2 schemas para deserialização de webhooks.
+### Phase 3: Framework Integrations & Middleware (Planned)
+- [ ] Django app with a webhook view and signal handlers (`edpay_payment_succeeded`).
+- [ ] FastAPI dependency injection provider (`Depends(get_edpay_client)`).
+- [ ] Pydantic v2 schemas for webhook deserialization.
 
-### Fase 4: Testes & CI/CD
-- [ ] Testes unitários com `respx` mockando respostas HTTP da EDPay.
-- [ ] GitHub Actions workflow para lint (`ruff`) e tipagem (`mypy`).
-- [ ] Publicação no PyPI.
+### Phase 4: Testing & CI/CD
+- [ ] Unit tests with `respx` mocking EDPay HTTP responses.
+- [ ] GitHub Actions workflow for linting (`ruff`) and type checking (`mypy`).
+- [ ] Publication on PyPI.

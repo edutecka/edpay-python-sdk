@@ -81,7 +81,7 @@ class EDPayClient:
         req_headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "EDPay-Python-SDK/1.4.0",
+            "User-Agent": "EDPay-Python-SDK/1.5.0",
         }
         if authenticated:
             req_headers["X-EDPay-Public-Key"] = self.public_key
