@@ -12,7 +12,7 @@ Python client for sending server-to-server requests to the EDPay API.
 Install the SDK:
 
 ```bash
-python -m pip install "git+https://github.com/edutecka/edpay-python-sdk.git"
+python -m pip install "edpay==1.6.2"
 ```
 
 ## Create a payment
