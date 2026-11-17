@@ -16,9 +16,9 @@
 - [x] HMAC SHA-256 signature verification for webhooks.
 
 ### Phase 2: Resource Modules (Completed)
-- [x] `PaymentsResource`: `create`, `retrieve`, `cancel`.
-- [x] Checkout operations are exposed as child methods of `payments`. (`create`, `public_checkout`, `link_checkout`, and token methods)
-- [x] Standalone payment-link resources are superseded by `payments.link_checkout(payment_id, ...)`.
+- [x] `PaymentsResource`: create and retrieve payment records.
+- [x] Checkout operations are child methods of `payments`: `private_checkout`, `public_checkout`, `link_checkout`, and token-based buyer operations.
+- [x] Link checkout is created for an existing payment with `payments.link_checkout(payment_id, ...)`.
 - [x] `CustomersResource`: `create`, `retrieve`, `update`.
 - [x] `WebhooksResource`: `verify_signature`.
 
