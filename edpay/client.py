@@ -19,13 +19,11 @@ class EDPayClient:
     """Official client for interacting with the EDPay API."""
 
     DEFAULT_BASE_URL = "https://api-pay.edutecka.com"
-    SANDBOX_BASE_URL = "https://api-pay.edutecka.com"
 
     def __init__(
         self,
         public_key: str,
         private_key: str,
-        environment: str = "production",
         base_url: Optional[str] = None,
         timeout: float = 30.0,
     ):
@@ -44,15 +42,8 @@ class EDPayClient:
 
         self.public_key = public_key
         self.private_key = private_key
-        self.environment = environment
         self.timeout = timeout
-
-        if base_url:
-            self.base_url = base_url.rstrip("/")
-        else:
-            self.base_url = (
-                self.SANDBOX_BASE_URL if environment.lower() in ("sandbox", "test") else self.DEFAULT_BASE_URL
-            )
+        self.base_url = base_url.rstrip("/") if base_url else self.DEFAULT_BASE_URL
 
         # Resources
         self.payments = PaymentsResource(self)
@@ -87,7 +78,7 @@ class EDPayClient:
         req_headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": "EDPay-Python-SDK/1.6.0",
+            "User-Agent": "EDPay-Python-SDK/1.6.1",
         }
         if authenticated:
             req_headers["X-EDPay-Public-Key"] = self.public_key

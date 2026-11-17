@@ -17,7 +17,7 @@ python -m pip install "git+https://github.com/edutecka/edpay-python-sdk.git"
 
 ## Create a payment
 
-Every partner API request requires both `EDPAY_PUBLIC_KEY` (`pk_test_` or `pk_live_`) and `EDPAY_PRIVATE_KEY` (`sk_test_` or `sk_live_`) from the same environment. The SDK rejects missing, blank, or mismatched key pairs when creating the client. Public catalog requests and buyer-facing checkout requests authenticated by a checkout token do not use the partner key pair; never put the private key in browser code.
+Every partner API request requires both `EDPAY_PUBLIC_KEY` (`pk_test_` or `pk_live_`) and `EDPAY_PRIVATE_KEY` (`sk_test_` or `sk_live_`) from the same environment. The SDK rejects missing, blank, or mismatched key pairs when creating the client. Public catalog requests and buyer-facing checkout requests authenticated by a checkout token do not use the partner key pair; never put the private key in browser code. The matching key prefixes select test or live access; both use the single default host, https://api-pay.edutecka.com.
 
 Create API keys in the EDPay merchant dashboard and keep the private key on your server. The SDK authenticates partner API requests using the `X-EDPay-Public-Key` and `X-EDPay-Private-Key` headers.
 
@@ -33,8 +33,6 @@ from edpay import EDPayClient, normalize_phone_number, phone_number_options_for_
 client = EDPayClient(
     public_key=os.environ["EDPAY_PUBLIC_KEY"],
     private_key=os.environ["EDPAY_PRIVATE_KEY"],
-    environment="sandbox",
-    base_url="https://api-pay.edutecka.com",
 )
 
 payment = client.payments.create(

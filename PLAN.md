@@ -12,7 +12,7 @@
 ### Phase 1: Core Client & Authentication (Completed)
 - [x] Base client with `X-EDPay-Public-Key` and `X-EDPay-Private-Key` header injection.
 - [x] Idempotency support via `Idempotency-Key`.
-- [x] Automatic switching between `sandbox` (`https://sandbox-api.edpay.co.mz`) and `production` (`https://api.edpay.co.mz`).
+- [x] Use the single API host; test or live access is selected by the matching API key prefixes.
 - [x] HMAC SHA-256 signature verification for webhooks.
 
 ### Phase 2: Resource Modules (Completed)
