@@ -25,7 +25,7 @@ class EDPayClient:
         public_key: str,
         private_key: str,
         base_url: Optional[str] = None,
-        timeout: float = 30.0,
+        timeout: float = 90.0,
     ):
         public_key = public_key.strip() if isinstance(public_key, str) else ""
         private_key = private_key.strip() if isinstance(private_key, str) else ""
