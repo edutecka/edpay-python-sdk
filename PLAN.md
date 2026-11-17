@@ -17,8 +17,8 @@
 
 ### Phase 2: Resource Modules (Completed)
 - [x] `PaymentsResource`: `create`, `retrieve`, `cancel`.
-- [x] `CheckoutResource`: `create_session`, `expire_session`.
-- [x] `PaymentLinksResource`: `create`, `list`, `revoke`.
+- [x] Checkout operations are exposed as child methods of `payments`. (`create`, `public_checkout`, `link_checkout`, and token methods)
+- [x] Standalone payment-link resources are superseded by `payments.link_checkout(payment_id, ...)`.
 - [x] `CustomersResource`: `create`, `retrieve`, `update`.
 - [x] `WebhooksResource`: `verify_signature`.
 

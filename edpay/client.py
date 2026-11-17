@@ -6,8 +6,6 @@ from urllib.parse import urlencode
 
 from edpay.exceptions import EDPayException
 from edpay.resources.payments import PaymentsResource
-from edpay.resources.checkout import CheckoutResource
-from edpay.resources.payment_links import PaymentLinksResource
 from edpay.resources.customers import CustomersResource
 from edpay.resources.invoices import Invoices
 from edpay.resources.subscriptions import Subscriptions
@@ -58,8 +56,6 @@ class EDPayClient:
 
         # Resources
         self.payments = PaymentsResource(self)
-        self.checkout = CheckoutResource(self)
-        self.payment_links = PaymentLinksResource(self)
         self.customers = CustomersResource(self)
         self.invoices = Invoices(self)
         self.subscriptions = Subscriptions(self)
