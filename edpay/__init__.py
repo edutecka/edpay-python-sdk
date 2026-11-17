@@ -13,7 +13,7 @@ from edpay.contacts import (
 )
 from edpay.webhooks import EDPayWebhookEvent, EDPayWebhookEventType, EDPayWebhookPaymentData, EDPayPaymentStatus
 
-__version__ = "1.6.1"
+__version__ = "1.6.2"
 __all__ = [
     "EDPayClient",
     "EDPayException",
