@@ -4,35 +4,28 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: Existing version tag to publish, for example v1.6.2
-        required: true
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: pypi-${{ inputs.release_tag || github.ref_name }}
+  group: pypi-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
-  publish:
+  build:
+    name: Build and validate distributions
     runs-on: ubuntu-latest
-    env:
-      RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.ref }}
 
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Verify release tag matches project version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           python - <<'PY'
           import os
@@ -50,19 +43,35 @@ jobs:
           python -m pip install --upgrade build twine
           python -m pip install -e ".[dev]"
 
-      - name: Run tests and build distributions
+      - name: Run tests and validate distributions
         run: |
           python -m pytest
           python -m build
           python -m twine check dist/*
 
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          if [ -z "$TWINE_PASSWORD" ]; then
-            echo "::error::Add the PYPI_API_TOKEN repository secret before publishing."
-            exit 1
-          fi
-          python -m twine upload --non-interactive --repository pypi dist/*
+      - name: Upload distributions for the publish job
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/edpay
+    permissions:
+      id-token: write
+    steps:
+      - name: Download validated distributions
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: Publish distributions using PyPI Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
